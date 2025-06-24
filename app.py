@@ -24,8 +24,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    name = db.Column(db.String(100), nullable=False, default="Anonymous")
-    avatar = db.Column(db.String(200), default="/default-avatar.png")
+    name = db.Column(db.String(100), nullable=False, default="User")
+    avatar = db.Column(db.String(200), default="https://png.pngtree.com/png-clipart/20230927/original/pngtree-man-avatar-image-for-profile-png-image_13001882.png")
 
 class RoadmapItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -33,7 +33,7 @@ class RoadmapItem(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(50), nullable=False)
     upvotes = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     comments = db.relationship("Comment", backref="item", cascade="all, delete")
 
 class Upvote(db.Model):
@@ -49,8 +49,8 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey("roadmap_item.id"), nullable=False)
     text = db.Column(db.String(500), nullable=False)  # Increased from 300 to 500
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, onupdate=datetime.now())
     replies = db.relationship("Reply", backref="parent_comment", cascade="all, delete")
     user = db.relationship("User", backref="comments")
 
@@ -60,8 +60,8 @@ class Reply(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     text = db.Column(db.String(500), nullable=False)
     depth = db.Column(db.Integer, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, onupdate=datetime.now())
     user = db.relationship("User", backref="replies")
 
 
@@ -262,13 +262,13 @@ def handle_comment(comment_id):
         return jsonify({"message": "Comment not found"}), 404
     
     current_user_id = get_jwt_identity()
-    if comment.user_id != current_user_id:
+    if int(comment.user_id) != int(current_user_id):
         return jsonify({"message": "Unauthorized"}), 403
-    
+
     if request.method == "PUT":
         data = request.get_json()
         comment.text = data["text"]
-        comment.updated_at = datetime.utcnow()
+        comment.updated_at = datetime.now()
         db.session.commit()
         return jsonify({
             "id": comment.id,
@@ -331,7 +331,7 @@ def handle_reply(reply_id):
     if request.method == "PUT":
         data = request.get_json()
         reply.text = data["text"]
-        reply.updated_at = datetime.utcnow()
+        reply.updated_at = datetime.now()
         db.session.commit()
         return jsonify({
             "id": reply.id,
